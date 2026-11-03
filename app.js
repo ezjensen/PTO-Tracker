@@ -109,7 +109,7 @@ function render(){
   var p=S.person,y=S.year,h='';
   if(!y){y=S.year=String(new Date().getFullYear())}
   var pp=personDoc(p)||{};
-  h+='<header class="top"><div><h1>PTO Tracker</h1><p class="sub"><span class="who">'+esc(pp.name||'')+'</span>'+(pp.employer?' · '+esc(pp.employer):'')+' · All figures in hours</p></div><button class="btn primary" data-action="add">Add time off</button></header>';
+  h+='<header class="top"><div class="brand"><img class="logo" src="icons/icon-192.png" alt="" width="52" height="52"><div><h1>PTO Tracker</h1><p class="sub"><span class="who">'+esc(pp.name||'')+'</span>'+(pp.employer?' · '+esc(pp.employer):'')+' · All figures in hours</p></div></div><button class="btn primary" data-action="add">Add time off</button></header>';
   h+='<nav class="people" aria-label="Person">'+S.people.map(function(q){return '<button class="pc'+pcolor(q.id)+'" data-action="person" data-person="'+esc(q.id)+'" aria-pressed="'+(q.id===p)+'">'+avatar(q)+esc(q.name)+(q.employer?'<small>'+esc(q.employer)+'</small>':'')+'</button>'}).join('')+'<button class="btn small" data-action="person-add">+ Add person</button></nav>';
   var ids=allYears();
   h+='<nav class="years" aria-label="Year">'+ids.map(function(i){return '<button data-action="year" data-year="'+i+'" aria-pressed="'+(String(i)===String(y))+'">'+i+'</button>'}).join('')+'</nav>';
@@ -129,7 +129,7 @@ function render(){
   app.innerHTML=h;
 }
 function signInHtml(){
-  return '<div class="panel stack" style="max-width:420px;margin:48px auto 0;width:100%"><div><h1>PTO Tracker</h1><p class="sub">Sign in to see your household’s time off.</p></div>'+
+  return '<div class="panel stack" style="max-width:420px;margin:48px auto 0;width:100%"><div class="brand"><img class="logo" src="icons/icon-192.png" alt="" width="52" height="52"><div><h1>PTO Tracker</h1><p class="sub">Sign in to see your household’s time off.</p></div></div>'+
     '<button class="btn primary" data-action="sign-apple">Continue with Apple</button><button class="btn" data-action="sign-google">Continue with Google</button>'+
     '<div class="eyebrow" style="text-align:center">or</div>'+
     '<label class="field">Email<input id="si-email" type="email" autocomplete="email" placeholder="you@example.com"></label>'+
