@@ -107,6 +107,7 @@ function render(){
   if(!ready){app.innerHTML='<div class="loading">Loading your PTO…</div>';return}
   if(!S.people.length){app.innerHTML='<div class="panel empty"><h2>Who is this PTO tracker for?</h2><p>Add the first person to get started.</p><button class="btn primary" data-action="person-add">Add person</button></div>';return}
   var p=S.person,y=S.year,h='';
+  if(!y){y=S.year=String(new Date().getFullYear())}
   var pp=personDoc(p)||{};
   h+='<header class="top"><div><h1>PTO Tracker</h1><p class="sub"><span class="who">'+esc(pp.name||'')+'</span>'+(pp.employer?' · '+esc(pp.employer):'')+' · All figures in hours</p></div><button class="btn primary" data-action="add">Add time off</button></header>';
   h+='<nav class="people" aria-label="Person">'+S.people.map(function(q){return '<button class="pc'+pcolor(q.id)+'" data-action="person" data-person="'+esc(q.id)+'" aria-pressed="'+(q.id===p)+'">'+avatar(q)+esc(q.name)+(q.employer?'<small>'+esc(q.employer)+'</small>':'')+'</button>'}).join('')+'<button class="btn small" data-action="person-add">+ Add person</button></nav>';
@@ -116,7 +117,7 @@ function render(){
   if(S.tab==='together'){h+=tabsHtml()+'<section>'+viewTogether()+'</section>';app.innerHTML=h;return}
   if(!yr){
     h+='<div class="panel stack"><h2 style="font-size:20px">'+esc(pp.name||'This person')+' has no '+esc(y)+' yet</h2><p class="hint" style="margin:0">Set up '+esc(y)+' to start tracking. It carries over up to 40 hrs from last year if there is one and adds the standard holiday schedule. You can change every number afterwards.</p><div class="actions"><button class="btn primary" data-action="setup-year">Set up '+esc(y)+'</button></div></div>';
-    h+=tabsHtml();app.innerHTML=h;return;
+    h+=tabsHtml();if(S.tab==='settings')h+='<section>'+viewSet({})+'</section>';app.innerHTML=h;return;
   }
   var st=stats(y,p);
   var past=entriesFor(p,y).filter(function(e){return e.status==='planned'&&(e.end||e.start)<todayStr()});
@@ -356,7 +357,7 @@ function typesPanel(p){
   return h+'</div>';
 }
 function viewSet(st){
-  var yr=st.yr,y=S.year,p=S.person,pp=personDoc(p)||{},mine=personYears(p),maxY=Math.max.apply(null,mine);
+  var yr=st.yr,y=S.year,p=S.person,pp=personDoc(p)||{},mine=personYears(p),maxY=mine.length?Math.max.apply(null,mine):0;
   function f(id,label,val,step){return '<label class="field">'+label+'<input id="'+id+'" type="number" step="'+(step||'0.01')+'" value="'+esc(val==null?'':val)+'"></label>'}
   var h='<div class="panel stack"><h2 style="font-size:20px">Person</h2><div class="kv"><label class="field">Name<input id="pp-name" type="text" value="'+esc(pp.name||'')+'" maxlength="40"></label>'+
     '<label class="field">Employer<input id="pp-emp" type="text" value="'+esc(pp.employer||'')+'" maxlength="60"></label>'+
@@ -365,6 +366,7 @@ function viewSet(st){
     '<div class="field">Photo (shown instead of the emoji)<div class="actions"><span id="pp-prev" class="pc'+pcolor(p)+'">'+avatar(personWithPending(pp),true)+'</span><input id="pp-photo" type="file" accept="image/*" data-action="pp-photo"><button class="btn small" data-action="pp-photo-clear">Remove photo</button></div></div>'+
     '<div class="actions"><button class="btn" data-action="save-person">Save person</button></div>'+
     '<div class="actions" style="margin-top:6px">'+(S.confirmPerson===p?'<span class="muted">Delete '+esc(pp.name||'this person')+' and all of their entries, holidays, years and types? This cannot be undone.</span><button class="btn small danger" data-action="person-del-yes">Delete everything</button><button class="btn small" data-action="person-del-no">Keep</button>':'<button class="btn small danger" data-action="person-del">Delete this person</button>')+'</div></div>';
+  if(!yr){h+='<div class="panel stack" style="margin-top:14px"><h2 style="font-size:20px">'+esc(y)+' balances</h2><p class="hint" style="margin:0">Set up '+esc(y)+' to enter carried-over, accrued and future hours and the allowances.</p><div class="actions"><button class="btn primary" data-action="setup-year">Set up '+esc(y)+'</button></div></div>';h+=typesPanel(p);h+=accountPanel();return h}
   h+='<div class="panel stack" style="margin-top:14px"><h2 style="font-size:20px">'+esc(y)+' balances</h2><div class="kv">'+
     f('s-carried','Carried in from last year',yr.carried)+f('s-accrued','Accrued to date',yr.accrued)+f('s-future','Future accrual',yr.future)+
     '<label class="field">Accrual as of<input id="s-asof" type="date" value="'+esc(yr.asOf||'')+'"></label>'+
