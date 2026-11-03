@@ -363,7 +363,8 @@ function viewSet(st){
     '<label class="field">Emoji<input id="pp-emoji" type="text" value="'+esc(pp.emoji||'')+'" maxlength="8" placeholder="Paste an emoji"></label></div>'+
     '<div class="field">Color<div class="swatches" role="radiogroup" aria-label="Person color">'+SWATCH.map(function(n,i){return '<label class="k'+i+'" title="'+n+'"><input type="radio" name="pp-color" value="'+i+'"'+(pcolor(p)===i?' checked':'')+'><span></span></label>'}).join('')+'</div></div>'+
     '<div class="field">Photo (shown instead of the emoji)<div class="actions"><span id="pp-prev" class="pc'+pcolor(p)+'">'+avatar(personWithPending(pp),true)+'</span><input id="pp-photo" type="file" accept="image/*" data-action="pp-photo"><button class="btn small" data-action="pp-photo-clear">Remove photo</button></div></div>'+
-    '<div class="actions"><button class="btn" data-action="save-person">Save person</button></div></div>';
+    '<div class="actions"><button class="btn" data-action="save-person">Save person</button></div>'+
+    '<div class="actions" style="margin-top:6px">'+(S.confirmPerson===p?'<span class="muted">Delete '+esc(pp.name||'this person')+' and all of their entries, holidays, years and types? This cannot be undone.</span><button class="btn small danger" data-action="person-del-yes">Delete everything</button><button class="btn small" data-action="person-del-no">Keep</button>':'<button class="btn small danger" data-action="person-del">Delete this person</button>')+'</div></div>';
   h+='<div class="panel stack" style="margin-top:14px"><h2 style="font-size:20px">'+esc(y)+' balances</h2><div class="kv">'+
     f('s-carried','Carried in from last year',yr.carried)+f('s-accrued','Accrued to date',yr.accrued)+f('s-future','Future accrual',yr.future)+
     '<label class="field">Accrual as of<input id="s-asof" type="date" value="'+esc(yr.asOf||'')+'"></label>'+
@@ -534,8 +535,11 @@ document.addEventListener('click',async function(ev){
   if(a==='e-calc'||a==='filter-type'||a==='filter-planned'||a==='e-hours')return;
   switch(a){
     case 'year':S.year=el.dataset.year;S.confirm=null;try{localStorage.setItem('pto-year',S.year)}catch(e){}render();break;
-    case 'person':S.person=el.dataset.person;S.confirm=null;S.pendingAvatar=undefined;try{localStorage.setItem('pto-person',S.person)}catch(e){}render();break;
+    case 'person':S.person=el.dataset.person;S.confirm=null;S.confirmPerson=null;S.pendingAvatar=undefined;try{localStorage.setItem('pto-person',S.person)}catch(e){}render();break;
     case 'person-add':personModal();break;
+    case 'person-del':S.confirmPerson=S.person;render();break;
+    case 'person-del-no':S.confirmPerson=null;render();break;
+    case 'person-del-yes':{var gone=S.person;S.confirmPerson=null;try{await db.collection('people').doc(gone).delete();try{if(localStorage.getItem('pto-person')===gone)localStorage.removeItem('pto-person')}catch(e){}await loadAll();toast('Person deleted')}catch(e){fail(e)}break}
     case 'p-save':addPerson();break;
     case 'save-person':savePerson();break;
     case 'crop-save':try{S.pendingAvatar=cropResult();closeModal();updatePrev();toast('Photo ready. Press Save person to keep it.')}catch(e){toast('Couldn’t crop that image.')}break;
