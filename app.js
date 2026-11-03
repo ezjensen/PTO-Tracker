@@ -142,11 +142,20 @@ function householdHtml(){
     '<div class="panel stack"><h2 style="font-size:20px">Join a household</h2><label class="field">Invite code<input id="hh-code" type="text" maxlength="40" autocapitalize="none" autocomplete="off"></label><div class="actions"><button class="btn" data-action="hh-join">Join</button></div></div>'+
     (S.authMsg?'<p class="hint">'+esc(S.authMsg)+'</p>':'')+'<div class="actions"><button class="btn small" data-action="sign-out">Sign out</button></div></div>';
 }
+function appLink(){return location.origin+location.pathname}
+function inviteText(){var c=(S.household||{}).invite_code||'';return 'Join our household on PTO Tracker: '+appLink()+'\n1. Sign in\n2. Choose “Join a household”\n3. Enter the invite code: '+c}
+async function shareInvite(){
+  var t=inviteText();
+  if(navigator.share){try{await navigator.share({title:'Join our PTO Tracker household',text:t});return}catch(e){if(e&&e.name==='AbortError')return}}
+  try{await navigator.clipboard.writeText(t);toast('Invite copied. Paste it into a message.')}catch(e){toast('Sharing isn’t available here. Copy the link and code instead.')}
+}
 function accountPanel(){
   var hh=S.household||{};
   return '<div class="panel stack" style="margin-top:14px"><h2 style="font-size:20px">Account and sharing</h2>'+
     '<p class="hint" style="margin:0">Signed in as <b>'+esc(((S.session||{}).user||{}).email||'')+'</b>. Household: <b>'+esc(hh.name||'')+'</b>.</p>'+
     '<div class="field">Invite code<div class="actions"><code class="num" style="font-size:16px">'+esc(hh.invite_code||'')+'</code><button class="btn small" data-action="copy-code">Copy</button><button class="btn small" data-action="rotate-code">New code</button></div></div>'+
+    '<div class="field">App link<div class="actions"><a href="'+esc(appLink())+'" class="num" style="font-size:14px;word-break:break-all">'+esc(appLink())+'</a><button class="btn small" data-action="copy-link">Copy link</button></div></div>'+
+    '<div class="actions"><button class="btn primary" data-action="share-invite">Share invite…</button></div>'+
     '<p class="hint" style="margin:0">Anyone who signs in and enters this code joins the household and can see and edit everyone’s time off. Make a new code if you shared it with the wrong person.</p>'+
     '<div class="actions"><button class="btn" data-action="sign-out">Sign out</button></div></div>';
 }
@@ -554,6 +563,8 @@ document.addEventListener('click',async function(ev){
     case 'reload':S.nodb=false;if(S.session)startSession();else render();break;
     case 'hh-create':hhCreate();break;
     case 'hh-join':hhJoin();break;
+    case 'share-invite':shareInvite();break;
+    case 'copy-link':try{await navigator.clipboard.writeText(appLink());toast('Link copied')}catch(e){toast('Select the link and copy it.')}break;
     case 'copy-code':try{await navigator.clipboard.writeText((S.household||{}).invite_code||'');toast('Code copied')}catch(e){toast('Select the code and copy it.')}break;
     case 'rotate-code':try{var rc=await sb.rpc('rotate_invite_code',{p_household:HID});if(rc.error)throw rc.error;S.household.invite_code=rc.data;render();toast('New code created')}catch(e){fail(e)}break;
     case 'type-add':typeModal(null);break;

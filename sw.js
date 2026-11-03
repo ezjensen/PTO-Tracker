@@ -1,5 +1,5 @@
 // Keeps the app shell available offline. Calls to Supabase are never cached.
-const CACHE = 'pto-tracker-v5';
+const CACHE = 'pto-tracker-v6';
 const SHELL = ['./', './index.html', './app.js', './app.css', './config.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
