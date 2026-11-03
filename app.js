@@ -366,16 +366,16 @@ function viewSet(st){
     '<div class="field">Photo (shown instead of the emoji)<div class="actions"><span id="pp-prev" class="pc'+pcolor(p)+'">'+avatar(personWithPending(pp),true)+'</span><input id="pp-photo" type="file" accept="image/*" data-action="pp-photo"><button class="btn small" data-action="pp-photo-clear">Remove photo</button></div></div>'+
     '<div class="actions"><button class="btn" data-action="save-person">Save person</button></div>'+
     '<div class="actions" style="margin-top:6px">'+(S.confirmPerson===p?'<span class="muted">Delete '+esc(pp.name||'this person')+' and all of their entries, holidays, years and types? This cannot be undone.</span><button class="btn small danger" data-action="person-del-yes">Delete everything</button><button class="btn small" data-action="person-del-no">Keep</button>':'<button class="btn small danger" data-action="person-del">Delete this person</button>')+'</div></div>';
-  if(!yr){h+='<div class="panel stack" style="margin-top:14px"><h2 style="font-size:20px">'+esc(y)+' balances</h2><p class="hint" style="margin:0">Set up '+esc(y)+' to enter carried-over, accrued and future hours and the allowances.</p><div class="actions"><button class="btn primary" data-action="setup-year">Set up '+esc(y)+'</button></div></div>';h+=typesPanel(p);h+=accountPanel();return h}
+  var noYr=!yr;yr=yr||{};st=st||{};
   h+='<div class="panel stack" style="margin-top:14px"><h2 style="font-size:20px">'+esc(y)+' balances</h2><div class="kv">'+
     f('s-carried','Carried in from last year',yr.carried)+f('s-accrued','Accrued to date',yr.accrued)+f('s-future','Future accrual',yr.future)+
     '<label class="field">Accrual as of<input id="s-asof" type="date" value="'+esc(yr.asOf||'')+'"></label>'+
     f('s-cap','Max carryover',yr.carryCap==null?40:yr.carryCap)+typesFor(p).filter(function(t){return t.kind==='allowance'}).map(function(t){return f('s-al-'+t.id,t.name+' allowance',allowFor(yr,t))}).join('')+
-    '</div><p class="hint" style="margin:0">PTO total = carried + accrued + future = <b class="num">'+fh(st.total)+'</b> hrs. Accrual rates depend on the employer.</p>'+
+    '</div><p class="hint" style="margin:0">PTO total = carried + accrued + future = <b class="num">'+fh(st.total||0)+'</b> hrs. Accrual rates depend on the employer.'+(noYr?' Saving creates '+esc(y)+' with the standard holiday schedule.':'')+'</p>'+
     '<div class="actions"><button class="btn primary" data-action="save-set">Save balances</button></div></div>';
   h+=typesPanel(p);
   h+=accountPanel();
-  if(+y===maxY){
+  if(!noYr&&+y===maxY){
     h+='<div class="panel stack" style="margin-top:14px"><h2 style="font-size:20px">Start '+(maxY+1)+'</h2><p class="hint" style="margin:0">Creates the next year with up to '+fh(st.cap)+' hrs carried over (carrying <b class="num">'+fh(st.carry)+'</b> based on planned time), the standard holiday schedule, and this year’s accrual as a starting estimate. Adjust the numbers afterwards.</p>'+
       '<div class="actions"><button class="btn" data-action="new-year">Start '+(maxY+1)+'</button></div></div>';
   }
@@ -465,10 +465,11 @@ async function saveHoliday(){
 }
 async function saveSettings(){
   function n(id){var v=parseFloat($(id).value);return isNaN(v)?0:v}
-  var yr=yearDoc(S.year);if(!yr)return;
   var al={};typesFor(S.person).forEach(function(t){if(t.kind==='allowance'&&$('#s-al-'+t.id))al[t.id]=n('#s-al-'+t.id)});
-  try{ await db.collection('years').doc(yr.id).update({carried:n('#s-carried'),accrued:n('#s-accrued'),future:n('#s-future'),asOf:$('#s-asof').value||'',
-    carryCap:n('#s-cap'),allowances:al}); toast('Balances saved') }catch(e){fail(e)}
+  var vals={carried:n('#s-carried'),accrued:n('#s-accrued'),future:n('#s-future'),asOf:$('#s-asof').value||'',carryCap:n('#s-cap'),allowances:al};
+  var yr=yearDoc(S.year);
+  if(!yr){try{await createYear(S.person,+S.year)}catch(e){fail(e);return}yr=yearDoc(S.year);if(!yr)return}
+  try{ await db.collection('years').doc(yr.id).update(vals); toast('Balances saved') }catch(e){fail(e)}
 }
 async function seedTypes(p){
   for(var i=0;i<DEFAULT_TYPES.length;i++){var d=DEFAULT_TYPES[i];
